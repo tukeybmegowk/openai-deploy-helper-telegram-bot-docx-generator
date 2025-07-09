@@ -1,0 +1,34 @@
+name: Daily consumer-cases report
+
+on:
+  schedule:
+    # каждый день в 21:00 UTC ≈ 00:00 MSK
+    - cron:  '0 21 * * *'
+  workflow_dispatch:  # запуск вручную из вкладки Actions
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          pip install requests beautifulsoup4 lxml reportlab
+
+      - name: Run parser & send to Telegram
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_ID:   ${{ secrets.CHAT_ID }}
+        run: |
+          python consumer_cases_parser.py \
+              --days 1 \
+              --csv report.csv \
+              --pdf report.pdf \
+              --telegram-token "$BOT_TOKEN" \
+              --telegram-chat-id "$CHAT_ID"
